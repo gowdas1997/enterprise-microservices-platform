@@ -117,8 +117,7 @@ func run(port string) string {
 	)
 
 	srv := grpc.NewServer(
-		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
-		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
 
 	svc := &productCatalog{}
@@ -180,8 +179,7 @@ func mustConnGRPC(ctx context.Context, conn **grpc.ClientConn, addr string) {
 		ctx,
 		addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 
 	if err != nil {
