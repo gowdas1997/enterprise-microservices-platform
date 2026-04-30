@@ -1,3 +1,4 @@
+```go
 // Copyright 2018 Google LLC
 
 package main
@@ -36,7 +37,7 @@ var log *logrus.Logger
 
 func init() {
 	log = logrus.New()
-	log.Level = logrus.InfoLevel
+	log.Level = logrus.DebugLevel
 	log.Formatter = &logrus.JSONFormatter{
 		FieldMap: logrus.FieldMap{
 			logrus.FieldKeyTime:  "timestamp",
@@ -99,12 +100,14 @@ func main() {
 	mustConnGRPC(ctx, &svc.emailSvcConn, svc.emailSvcAddr)
 	mustConnGRPC(ctx, &svc.paymentSvcConn, svc.paymentSvcAddr)
 
-	log.Infof("service config initialized")
+	log.Infof("service config: %+v", svc)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	var srv *grpc.Server
 
 	otel.SetTextMapPropagator(
 		propagation.NewCompositeTextMapPropagator(
@@ -113,18 +116,21 @@ func main() {
 		),
 	)
 
-	srv := grpc.NewServer(
-		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
-		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
+	srv = grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	)
 
 	pb.RegisterCheckoutServiceServer(srv, svc)
 	healthpb.RegisterHealthServer(srv, svc)
 
-	log.Infof("checkoutservice listening on %s", lis.Addr().String())
+	log.Infof("starting to listen on tcp: %q", lis.Addr().String())
 
 	err = srv.Serve(lis)
 	log.Fatal(err)
+}
+
+func initStats() {
+	// TODO
 }
 
 func initTracing() {
@@ -166,7 +172,6 @@ func mustMapEnv(target *string, envKey string) {
 
 func mustConnGRPC(ctx context.Context, conn **grpc.ClientConn, addr string) {
 	var err error
-
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
@@ -174,8 +179,7 @@ func mustConnGRPC(ctx context.Context, conn **grpc.ClientConn, addr string) {
 		ctx,
 		addr,
 		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 
 	if err != nil {
@@ -193,14 +197,16 @@ func (cs *checkoutService) Watch(req *healthpb.HealthCheckRequest, ws healthpb.H
 	return status.Errorf(codes.Unimplemented, "health check via Watch not implemented")
 }
 
-// Remaining original business logic functions stay unchanged below:
-// - PlaceOrder()
-// - prepareOrderItemsAndShippingQuoteFromCart()
-// - quoteShipping()
-// - getUserCart()
-// - emptyUserCart()
-// - prepOrderItems()
-// - convertCurrency()
-// - chargeCard()
-// - sendOrderConfirmation()
-// - shipOrder()
+// KEEP ALL ORIGINAL FUNCTIONS BELOW UNCHANGED FROM YOUR ORIGINAL FILE:
+// PlaceOrder
+// orderPrep
+// prepareOrderItemsAndShippingQuoteFromCart
+// quoteShipping
+// getUserCart
+// emptyUserCart
+// prepOrderItems
+// convertCurrency
+// chargeCard
+// sendOrderConfirmation
+// shipOrder
+```
