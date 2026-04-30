@@ -1,12 +1,13 @@
 plugins {
     id 'com.google.protobuf' version '0.9.4'
-    id 'com.github.sherter.google-java-format' version '0.9'
     id 'idea'
     id 'application'
 }
 
 repositories {
-    mavenCentral()
+    maven {
+        url "https://repo1.maven.org/maven2/"
+    }
     mavenLocal()
 }
 
@@ -39,7 +40,6 @@ dependencies {
                 "io.grpc:grpc-stub:${grpcVersion}",
                 "io.grpc:grpc-netty:${grpcVersion}",
                 "io.grpc:grpc-services:${grpcVersion}",
-                "io.grpc:grpc-census:${grpcVersion}",
                 "org.apache.logging.log4j:log4j-core:2.20.0",
                 "com.google.protobuf:protobuf-java:${protocVersion}"
 
@@ -66,11 +66,6 @@ protobuf {
     }
 }
 
-googleJavaFormat {
-    toolVersion '1.18.1'
-}
-
-// Inform IDEs like IntelliJ IDEA, Eclipse or NetBeans about the generated code.
 sourceSets {
     main {
         java {
@@ -83,8 +78,6 @@ sourceSets {
 
 startScripts.enabled = false
 
-// This to cache dependencies during Docker image building. First build will take time.
-// Subsequent build will be incremental.
 task downloadRepos(type: Copy) {
     from configurations.compileClasspath
     into offlineCompile
@@ -97,8 +90,7 @@ task adService(type: CreateStartScripts) {
     applicationName = 'AdService'
     outputDir = new File(project.buildDir, 'tmp')
     classpath = startScripts.classpath
-    defaultJvmOpts =
-             ["-agentpath:/opt/cprof/profiler_java_agent.so=-cprof_service=adservice,-cprof_service_version=1.0.0"]
+    defaultJvmOpts = []
 }
 
 task adServiceClient(type: CreateStartScripts) {
@@ -106,8 +98,7 @@ task adServiceClient(type: CreateStartScripts) {
     applicationName = 'AdServiceClient'
     outputDir = new File(project.buildDir, 'tmp')
     classpath = startScripts.classpath
-    defaultJvmOpts =
-             ["-agentpath:/opt/cprof/profiler_java_agent.so=-cprof_service=adserviceclient,-cprof_service_version=1.0.0"]
+    defaultJvmOpts = []
 }
 
 applicationDistribution.into('bin') {
