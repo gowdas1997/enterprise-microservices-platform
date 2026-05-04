@@ -11,4 +11,4 @@ ENV NODE_ENV=production
 
 EXPOSE 50052
 
-CMD ["node", "app.js"]
+CMD ["node", "server.js"]
